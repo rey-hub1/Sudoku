@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #f8fafc;
+  background-image: 
+    radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(37, 99, 235, 0.04) 0%, transparent 50%);
+  color: #1f2937;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Confetti animation */
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+@keyframes confetti-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+.confetti-piece {
+  position: fixed;
+  top: -10px;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  animation: confetti-fall 3s ease-out forwards, confetti-shake 0.5s ease-in-out infinite;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pop-in {
+  0% { transform: scale(0.85); opacity: 0; }
+  60% { transform: scale(1.04); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-pop-in {
+  animation: pop-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #2563eb 25%, #3b82f6 50%, #2563eb 75%);
+  background-size: 200% auto;
+  animation: shimmer 2s linear infinite;
+}
+
+/* Custom focus styles */
+

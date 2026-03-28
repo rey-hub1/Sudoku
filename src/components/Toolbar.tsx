@@ -21,6 +21,7 @@ const DIFFICULTIES: { value: Difficulty; label: string; color: string }[] = [
     { value: "medium", label: "Medium", color: "bg-amber-500" },
     { value: "hard", label: "Hard", color: "bg-orange-500" },
     { value: "expert", label: "Expert", color: "bg-red-500" },
+    { value: "expert_plus", label: "Expert+", color: "bg-gray-900" },
 ];
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -34,7 +35,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
     return (
         <div className="flex flex-col gap-3 w-full">
             {/* Difficulty selector */}
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-5 gap-2">
                 {DIFFICULTIES.map((d) => (
                     <button
                         key={d.value}

@@ -23,6 +23,53 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Theme overrides */
+body[data-theme="forest"] {
+  background-color: #f0fdf4;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(22, 163, 74, 0.06) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(34, 197, 94, 0.05) 0%, transparent 50%);
+}
+
+body[data-theme="sunset"] {
+  background-color: #fff7ed;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(249, 115, 22, 0.07) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(234, 88, 12, 0.05) 0%, transparent 50%);
+}
+
+body[data-theme="forest"] .bg-blue-600 { background-color: #16a34a !important; }
+body[data-theme="forest"] .bg-blue-700 { background-color: #15803d !important; }
+body[data-theme="forest"] .bg-blue-500 { background-color: #22c55e !important; }
+body[data-theme="forest"] .bg-blue-50 { background-color: #ecfdf5 !important; }
+body[data-theme="forest"] .text-blue-600 { color: #16a34a !important; }
+body[data-theme="forest"] .text-blue-800 { color: #166534 !important; }
+body[data-theme="forest"] .text-blue-200 { color: #bbf7d0 !important; }
+body[data-theme="forest"] .text-blue-300 { color: #86efac !important; }
+body[data-theme="forest"] .ring-blue-700 { --tw-ring-color: #15803d !important; }
+body[data-theme="forest"] .bg-amber-50 { background-color: #f0fdf4 !important; }
+body[data-theme="forest"] .bg-amber-300 { background-color: #86efac !important; }
+body[data-theme="forest"] .bg-amber-400 { background-color: #4ade80 !important; }
+body[data-theme="forest"] .bg-amber-500 { background-color: #22c55e !important; }
+body[data-theme="forest"] .text-amber-500 { color: #16a34a !important; }
+body[data-theme="forest"] .text-amber-400 { color: #22c55e !important; }
+
+body[data-theme="sunset"] .bg-blue-600 { background-color: #f97316 !important; }
+body[data-theme="sunset"] .bg-blue-700 { background-color: #ea580c !important; }
+body[data-theme="sunset"] .bg-blue-500 { background-color: #fb923c !important; }
+body[data-theme="sunset"] .bg-blue-50 { background-color: #fff7ed !important; }
+body[data-theme="sunset"] .text-blue-600 { color: #f97316 !important; }
+body[data-theme="sunset"] .text-blue-800 { color: #c2410c !important; }
+body[data-theme="sunset"] .text-blue-200 { color: #fed7aa !important; }
+body[data-theme="sunset"] .text-blue-300 { color: #fdba74 !important; }
+body[data-theme="sunset"] .ring-blue-700 { --tw-ring-color: #ea580c !important; }
+body[data-theme="sunset"] .bg-amber-50 { background-color: #fff7ed !important; }
+body[data-theme="sunset"] .bg-amber-300 { background-color: #fdba74 !important; }
+body[data-theme="sunset"] .bg-amber-400 { background-color: #fb923c !important; }
+body[data-theme="sunset"] .bg-amber-500 { background-color: #f97316 !important; }
+body[data-theme="sunset"] .text-amber-500 { color: #ea580c !important; }
+body[data-theme="sunset"] .text-amber-400 { color: #f97316 !important; }
+
 /* Confetti animation */
 @keyframes confetti-fall {
   0% {
@@ -96,4 +143,3 @@ body {
 }
 
 /* Custom focus styles */
-

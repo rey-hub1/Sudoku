@@ -3,14 +3,14 @@ import type { HintResult } from "../utils/sudoku";
 
 interface HintPanelProps {
     hint: HintResult | null;
-    hintRevealed: boolean;
+    hintStage: 0 | 1 | 2;
     onReveal: () => void;
     onDismiss: () => void;
 }
 
 const HintPanel: React.FC<HintPanelProps> = ({
     hint,
-    hintRevealed,
+    hintStage,
     onReveal,
     onDismiss,
 }) => {
@@ -43,11 +43,34 @@ const HintPanel: React.FC<HintPanelProps> = ({
 
             {/* Body */}
             <div className="px-4 py-3 flex items-start justify-between gap-4">
-                <p className="text-sm text-gray-700 leading-relaxed flex-1">
-                    {hint.message}
-                </p>
+                <div className="flex-1">
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                        {hint.message}
+                    </p>
+                    {hintStage >= 1 && hint.candidates.length > 0 && (
+                        <div className="mt-2 text-xs font-bold text-gray-700">
+                            Candidates:{" "}
+                            <span className="text-gray-900">
+                                {hint.candidates.join(", ")}
+                            </span>
+                        </div>
+                    )}
+                    {hintStage === 2 && (
+                        <div className="mt-2 text-xs font-black uppercase tracking-widest text-amber-700">
+                            Revealed
+                        </div>
+                    )}
+                </div>
                 <div className="flex gap-2 shrink-0 pt-0.5">
-                    {!hintRevealed && (
+                    {hintStage === 0 && (
+                        <button
+                            onClick={onReveal}
+                            className="text-xs font-black text-gray-900 bg-amber-300 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-0.5 active:translate-y-0.5 px-3 py-1.5 transition-all cursor-pointer uppercase tracking-wide whitespace-nowrap"
+                        >
+                            Show Candidates
+                        </button>
+                    )}
+                    {hintStage === 1 && (
                         <button
                             onClick={onReveal}
                             className="text-xs font-black text-gray-900 bg-amber-300 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-0.5 active:translate-y-0.5 px-3 py-1.5 transition-all cursor-pointer uppercase tracking-wide whitespace-nowrap"

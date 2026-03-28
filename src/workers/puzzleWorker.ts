@@ -4,6 +4,7 @@ import { generatePuzzle } from "../utils/sudoku";
 type PuzzleRequest = {
     id: number;
     difficulty: Difficulty;
+    seed?: string;
 };
 
 type PuzzleResponse = {
@@ -13,8 +14,8 @@ type PuzzleResponse = {
 };
 
 self.onmessage = (event: MessageEvent<PuzzleRequest>) => {
-    const { id, difficulty } = event.data;
-    const { puzzle, solution } = generatePuzzle(difficulty);
+    const { id, difficulty, seed } = event.data;
+    const { puzzle, solution } = generatePuzzle(difficulty, seed);
     const response: PuzzleResponse = { id, puzzle, solution };
     self.postMessage(response);
 };

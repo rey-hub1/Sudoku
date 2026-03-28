@@ -6,6 +6,7 @@ interface VictoryModalProps {
     mistakes: number;
     difficulty: Difficulty;
     bestTime: number | null;
+    achievements: { id: string; title: string; description: string }[];
     onNewGame: () => void;
 }
 
@@ -33,6 +34,7 @@ const DIFFICULTY_STARS: Record<Difficulty, number> = {
     medium: 2,
     hard: 3,
     expert: 4,
+    expert_plus: 4,
 };
 
 const VictoryModal: React.FC<VictoryModalProps> = ({
@@ -40,6 +42,7 @@ const VictoryModal: React.FC<VictoryModalProps> = ({
     mistakes,
     difficulty,
     bestTime,
+    achievements,
     onNewGame,
 }) => {
     const [confettiPieces, setConfettiPieces] = useState<
@@ -144,6 +147,27 @@ const VictoryModal: React.FC<VictoryModalProps> = ({
                             <p className="text-sm font-black text-gray-900">
                                 New Personal Best!
                             </p>
+                        </div>
+                    )}
+
+                    {achievements.length > 0 && (
+                        <div className="mb-4 border-2 border-gray-900 bg-amber-50 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                            <div className="px-3 py-2 border-b-2 border-gray-900 bg-gray-900 text-white text-xs font-black uppercase tracking-widest">
+                                Achievements Unlocked
+                            </div>
+                            <ul className="px-3 py-2 flex flex-col gap-2">
+                                {achievements.map((ach) => (
+                                    <li key={ach.id} className="text-sm">
+                                        <span className="font-black text-gray-900">
+                                            {ach.title}
+                                        </span>
+                                        <span className="text-gray-600">
+                                            {" "}
+                                            — {ach.description}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
                         </div>
                     )}
 

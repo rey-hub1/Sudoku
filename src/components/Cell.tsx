@@ -6,6 +6,10 @@ interface CellProps {
     value: number | null;
     notes: Set<number>;
     notesMode: boolean;
+    notesDisabled?: boolean;
+    heat?: number;
+    heatMax?: number;
+    heatmapEnabled?: boolean;
     isGiven: boolean;
     isSelected: boolean;
     isHighlighted: boolean;
@@ -23,6 +27,10 @@ const Cell: React.FC<CellProps> = ({
     value,
     notes,
     notesMode,
+    notesDisabled = false,
+    heat = 0,
+    heatMax = 0,
+    heatmapEnabled = false,
     isGiven,
     isSelected,
     isHighlighted,
@@ -86,10 +94,21 @@ const Cell: React.FC<CellProps> = ({
       `}
             aria-label={`Row ${row + 1}, Column ${col + 1}, value ${value || "empty"}`}
         >
+            {heatmapEnabled && heatMax > 0 && heat > 0 && !isSelected && (
+                <span
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                        backgroundColor: `rgba(59, 130, 246, ${Math.min(
+                            0.6,
+                            (heat / heatMax) * 0.6,
+                        )})`,
+                    }}
+                />
+            )}
             {value !== null ? (
-                <span className="leading-none">{value}</span>
-            ) : notes.size > 0 ? (
-                <div className="grid grid-cols-3 grid-rows-3 w-full h-full p-[1px] sm:p-[2px]">
+                <span className="leading-none relative z-10">{value}</span>
+            ) : !notesDisabled && notes.size > 0 ? (
+                <div className="grid grid-cols-3 grid-rows-3 w-full h-full p-[1px] sm:p-[2px] relative z-10">
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
                         <span
                             key={n}

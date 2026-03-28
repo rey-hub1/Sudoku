@@ -5,6 +5,7 @@ interface NumberPadProps {
     board: Board;
     solution: Board;
     notesMode: boolean;
+    notesDisabled?: boolean;
     onNumber: (num: number) => void;
     onErase: () => void;
     onToggleNotes: () => void;
@@ -58,6 +59,7 @@ const NumberPad: React.FC<NumberPadProps> = ({
     board,
     solution,
     notesMode,
+    notesDisabled = false,
     onNumber,
     onErase,
     onToggleNotes,
@@ -78,11 +80,20 @@ const NumberPad: React.FC<NumberPadProps> = ({
         return counts;
     }, [board, solution]);
 
+    const actionCols =
+        (showUndo ? 1 : 0) + 1 + (notesDisabled ? 0 : 1) + 1;
+
     return (
         <div className="flex flex-col gap-3 w-full">
             {/* Action buttons */}
             <div
-                className={`grid gap-2 ${showUndo ? "grid-cols-4" : "grid-cols-3"}`}
+                className={`grid gap-2 ${
+                    actionCols === 4
+                        ? "grid-cols-4"
+                        : actionCols === 3
+                            ? "grid-cols-3"
+                            : "grid-cols-2"
+                }`}
             >
                 {showUndo && (
                     <ActionBtn
@@ -123,27 +134,29 @@ const NumberPad: React.FC<NumberPadProps> = ({
                         <line x1="12" y1="9" x2="18" y2="15" />
                     </svg>
                 </ActionBtn>
-                <ActionBtn
-                    onClick={onToggleNotes}
-                    disabled={disabled}
-                    active={notesMode}
-                    color="blue"
-                    label="Notes"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                {!notesDisabled && (
+                    <ActionBtn
+                        onClick={onToggleNotes}
+                        disabled={disabled}
+                        active={notesMode}
+                        color="blue"
+                        label="Notes"
                     >
-                        <path d="M17 3a2.85 2.85 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                    </svg>
-                </ActionBtn>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <path d="M17 3a2.85 2.85 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                        </svg>
+                    </ActionBtn>
+                )}
                 <ActionBtn
                     onClick={onHint}
                     disabled={disabled}

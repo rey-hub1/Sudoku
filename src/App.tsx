@@ -96,7 +96,7 @@ function App() {
             </header>
 
             {/* Main game area */}
-            <main className="flex flex-col items-center gap-4 sm:gap-5 w-full max-w-120">
+            <main className="flex flex-col items-center gap-4 sm:gap-5 w-full max-w-[480px]">
                 {/* Toolbar */}
                 <Toolbar
                     difficulty={state.difficulty}
@@ -109,7 +109,7 @@ function App() {
 
                 {/* Grid */}
                 {state.isGenerating ? (
-                    <div className="w-full aspect-square max-w-125 flex items-center justify-center bg-white border-4 border-gray-900 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                    <div className="w-full aspect-square max-w-[500px] flex items-center justify-center bg-white border-4 border-gray-900 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
                         <div className="flex flex-col items-center gap-6">
                             <div className="w-16 h-16 border-8 border-gray-200 border-t-gray-900 rounded-full animate-spin"></div>
                             <span className="font-black text-2xl tracking-tighter text-gray-900 animate-pulse">GENERATING...</span>
@@ -142,6 +142,7 @@ function App() {
                 {/* Number Pad */}
                 <NumberPad
                     board={state.board}
+                    solution={state.solution}
                     notesMode={state.notesMode}
                     onNumber={actions.inputNumber}
                     onErase={actions.eraseCell}
@@ -157,7 +158,7 @@ function App() {
             <div className="w-full h-12 sm:h-16 shrink-0" />
 
             {/* Footer */}
-            <footer className="w-full max-w-120 text-center mb-8 sm:mb-12">
+            <footer className="w-full max-w-[480px] text-center mb-8 sm:mb-12">
                 <div className="flex items-center justify-center gap-x-6 gap-y-4 flex-wrap">
                     {[
                         { keys: "1–9", label: "Input" },

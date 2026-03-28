@@ -166,6 +166,8 @@ const SudokuGrid: React.FC<SudokuGridProps> = ({
                                     >
                                         <div className="w-full h-full">
                                             <Cell
+                                                row={r}
+                                                col={c}
                                                 value={value}
                                                 notes={notes[r][c]}
                                                 notesMode={

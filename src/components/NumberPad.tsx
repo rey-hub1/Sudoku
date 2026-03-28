@@ -3,6 +3,7 @@ import type { Board } from "../utils/sudoku";
 
 interface NumberPadProps {
     board: Board;
+    solution: Board;
     notesMode: boolean;
     onNumber: (num: number) => void;
     onErase: () => void;
@@ -37,7 +38,7 @@ const ActionBtn: React.FC<{
         blue: active
             ? "bg-blue-600 text-white border-blue-900 shadow-none"
             : "bg-amber-50 text-blue-600 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-blue-50 active:shadow-none active:translate-x-0.5 active:translate-y-0.5",
-        amber: "bg-amber-50 text-amber-500 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-amber-50-50 active:shadow-none active:translate-x-0.5 active:translate-y-0.5",
+        amber: "bg-amber-50 text-amber-500 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-amber-50/50 active:shadow-none active:translate-x-0.5 active:translate-y-0.5",
     };
     return (
         <button
@@ -55,6 +56,7 @@ const ActionBtn: React.FC<{
 
 const NumberPad: React.FC<NumberPadProps> = ({
     board,
+    solution,
     notesMode,
     onNumber,
     onErase,
@@ -67,13 +69,14 @@ const NumberPad: React.FC<NumberPadProps> = ({
     const numberCounts = useMemo(() => {
         const counts: Record<number, number> = {};
         for (let n = 1; n <= 9; n++) counts[n] = 0;
-        for (const row of board) {
-            for (const val of row) {
-                if (val !== null) counts[val]++;
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                const val = board[r][c];
+                if (val !== null && val === solution[r][c]) counts[val]++;
             }
         }
         return counts;
-    }, [board]);
+    }, [board, solution]);
 
     return (
         <div className="flex flex-col gap-3 w-full">

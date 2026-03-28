@@ -31,7 +31,7 @@ const CLUE_COUNTS: Record<Difficulty, number> = {
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 
-function createEmptyBoard(): Board {
+export function createEmptyBoard(): Board {
   return Array.from({ length: 9 }, () => Array(9).fill(null));
 }
 

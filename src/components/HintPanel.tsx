@@ -19,7 +19,7 @@ const HintPanel: React.FC<HintPanelProps> = ({
     return (
         <div className="animate-fade-in-up w-full border-2 border-gray-900 bg-amber-50 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
             {/* Header bar */}
-            <div className="flex items-center gap-2 px-4 py-2 bg-amber-50-400 border-b-2 border-gray-900">
+            <div className="flex items-center gap-2 px-4 py-2 bg-amber-400 border-b-2 border-gray-900">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="14"
@@ -50,7 +50,7 @@ const HintPanel: React.FC<HintPanelProps> = ({
                     {!hintRevealed && (
                         <button
                             onClick={onReveal}
-                            className="text-xs font-black text-gray-900 bg-amber-50-300 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-0.5 active:translate-y-0.5 px-3 py-1.5 transition-all cursor-pointer uppercase tracking-wide whitespace-nowrap"
+                            className="text-xs font-black text-gray-900 bg-amber-300 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-0.5 active:translate-y-0.5 px-3 py-1.5 transition-all cursor-pointer uppercase tracking-wide whitespace-nowrap"
                         >
                             Reveal
                         </button>

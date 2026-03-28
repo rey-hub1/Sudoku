@@ -7,6 +7,7 @@ import {
   isBoardComplete,
   isBoardCorrect,
   createEmptyNotes,
+  createEmptyBoard,
 } from '../utils/sudoku';
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -102,8 +103,16 @@ function clearSave() {
 // ─── Hook ────────────────────────────────────────────────────────────
 
 export function useGameState() {
+  const savedRef = useRef<SavedState | null>(null);
+  if (savedRef.current === null) {
+    savedRef.current = loadGame();
+  }
+  const needsInitialGenerateRef = useRef<boolean>(savedRef.current === null);
+  const workerRef = useRef<Worker | null>(null);
+  const requestIdRef = useRef(0);
+
   const [state, setState] = useState<GameState>(() => {
-    const saved = loadGame();
+    const saved = savedRef.current;
     if (saved) {
       const board = saved.board;
       return {
@@ -131,11 +140,10 @@ export function useGameState() {
       };
     }
 
-    const { puzzle, solution } = generatePuzzle('easy');
     return {
-      board: puzzle.map(r => [...r]),
-      solution,
-      initialBoard: puzzle.map(r => [...r]),
+      board: createEmptyBoard(),
+      solution: createEmptyBoard(),
+      initialBoard: createEmptyBoard(),
       notes: createEmptyNotes(),
       selectionStart: null,
       selectionEnd: null,
@@ -143,7 +151,7 @@ export function useGameState() {
       mistakes: 0,
       maxMistakes: 3,
       timer: 0,
-      isRunning: true,
+      isRunning: false,
       isComplete: false,
       isGameOver: false,
       difficulty: 'easy' as Difficulty,
@@ -153,7 +161,7 @@ export function useGameState() {
       hint: null,
       hintRevealed: false,
       history: [],
-      isGenerating: false,
+      isGenerating: true,
     };
   });
 
@@ -173,8 +181,81 @@ export function useGameState() {
 
   // Auto-save
   useEffect(() => {
-    saveGame(state);
+    if (state.isGenerating) return;
+    const timeout = setTimeout(() => saveGame(state), 300);
+    return () => clearTimeout(timeout);
   }, [state]);
+
+  // Init worker
+  useEffect(() => {
+    workerRef.current = new Worker(
+      new URL('../workers/puzzleWorker.ts', import.meta.url),
+      { type: 'module' },
+    );
+    return () => {
+      workerRef.current?.terminate();
+      workerRef.current = null;
+    };
+  }, []);
+
+  const generatePuzzleAsync = useCallback((difficulty: Difficulty) => {
+    const worker = workerRef.current;
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+
+    if (!worker) {
+      const { puzzle, solution } = generatePuzzle(difficulty);
+      return Promise.resolve({ puzzle, solution, requestId });
+    }
+
+    return new Promise<{ puzzle: Board; solution: Board; requestId: number }>((resolve) => {
+      const handleMessage = (event: MessageEvent<{ id: number; puzzle: Board; solution: Board }>) => {
+        if (event.data.id !== requestId) return;
+        worker.removeEventListener('message', handleMessage);
+        resolve({ puzzle: event.data.puzzle, solution: event.data.solution, requestId });
+      };
+      worker.addEventListener('message', handleMessage);
+      worker.postMessage({ id: requestId, difficulty });
+    });
+  }, []);
+
+  const applyNewPuzzle = useCallback((puzzle: Board, solution: Board, difficulty: Difficulty, requestId: number) => {
+    if (requestId !== requestIdRef.current) return;
+    clearSave();
+    setState(prev => ({
+      board: puzzle.map(r => [...r]),
+      solution,
+      initialBoard: puzzle.map(r => [...r]),
+      notes: createEmptyNotes(),
+      selectionStart: null,
+      selectionEnd: null,
+      notesMode: false,
+      mistakes: 0,
+      maxMistakes: 3,
+      timer: 0,
+      isRunning: true,
+      isComplete: false,
+      isGameOver: false,
+      difficulty,
+      bestTimes: prev.bestTimes,
+      conflicts: new Set<string>(),
+      wrongCells: new Set<string>(),
+      hint: null,
+      hintRevealed: false,
+      history: [],
+      isGenerating: false,
+    }));
+  }, []);
+
+  // Initial puzzle generation
+  useEffect(() => {
+    if (!needsInitialGenerateRef.current) return;
+    needsInitialGenerateRef.current = false;
+    setState(prev => ({ ...prev, isGenerating: true }));
+    generatePuzzleAsync('easy').then(({ puzzle, solution, requestId }) => {
+      applyNewPuzzle(puzzle, solution, 'easy', requestId);
+    });
+  }, [applyNewPuzzle, generatePuzzleAsync]);
 
   // ─── Actions ─────────────────────────────────────────────────────
 
@@ -284,19 +365,20 @@ export function useGameState() {
       // Determine mistake count across all selected cells
       let newMistakes = prev.mistakes;
       let isGameOver: boolean = prev.isGameOver;
+      let hasNewMistake = false;
       
       for (let r = minRow; r <= maxRow; r++) {
         for (let c = minCol; c <= maxCol; c++) {
           if (prev.initialBoard[r][c] === null && newBoard[r][c] !== null && newBoard[r][c] !== prev.solution[r][c]) {
-            // Count as a mistake if it WASN'T this number before?
-            // simpler version: just calculate total mistakes increment for newly placed incorrect numbers.
-            // Wait, previous mistakes tracking was 1 per wrong entry. 
-            // If they bulk-place wrong numbers, do they lose the game instantly? Yes.
             if (prev.board[r][c] !== newBoard[r][c]) {
-              newMistakes++;
+              hasNewMistake = true;
             }
           }
         }
+      }
+
+      if (hasNewMistake) {
+        newMistakes = Math.min(prev.maxMistakes, prev.mistakes + 1);
       }
 
       if (newMistakes >= prev.maxMistakes) {
@@ -398,6 +480,11 @@ export function useGameState() {
 
       // If hint is already showing but not revealed, reveal it
       if (prev.hint && !prev.hintRevealed) {
+        const historyEntry = {
+          board: prev.board.map(r => [...r]),
+          notes: prev.notes.map(r => r.map(c => new Set(c))),
+        };
+
         const { row, col } = prev.hint.cell;
         const newBoard = prev.board.map(r => [...r]);
         newBoard[row][col] = prev.hint.value;
@@ -433,6 +520,7 @@ export function useGameState() {
           hintRevealed: true,
           selectionStart: prev.hint.cell,
           selectionEnd: prev.hint.cell,
+          history: [...prev.history, historyEntry],
         };
       }
 
@@ -456,35 +544,10 @@ export function useGameState() {
     // Set generating state
     setState(prev => ({ ...prev, isGenerating: true }));
 
-    // Use setTimeout to allow UI to render loading state before heavy lifting
-    setTimeout(() => {
-      const { puzzle, solution } = generatePuzzle(diff);
-      clearSave();
-      setState(prev => ({
-        board: puzzle.map(r => [...r]),
-        solution,
-        initialBoard: puzzle.map(r => [...r]),
-        notes: createEmptyNotes(),
-        selectionStart: null,
-        selectionEnd: null,
-        notesMode: false,
-        mistakes: 0,
-        maxMistakes: 3,
-        timer: 0,
-        isRunning: true,
-        isComplete: false,
-        isGameOver: false,
-        difficulty: diff,
-        bestTimes: prev.bestTimes,
-        conflicts: new Set<string>(),
-        wrongCells: new Set<string>(),
-        hint: null,
-        hintRevealed: false,
-        history: [],
-        isGenerating: false,
-      }));
-    }, 50);
-  }, [state.difficulty]);
+    generatePuzzleAsync(diff).then(({ puzzle, solution, requestId }) => {
+      applyNewPuzzle(puzzle, solution, diff, requestId);
+    });
+  }, [state.difficulty, applyNewPuzzle, generatePuzzleAsync]);
 
   const restartGame = useCallback(() => {
     setState(prev => ({

@@ -1,6 +1,8 @@
 import React from "react";
 
 interface CellProps {
+    row: number;
+    col: number;
     value: number | null;
     notes: Set<number>;
     notesMode: boolean;
@@ -16,6 +18,8 @@ interface CellProps {
 }
 
 const Cell: React.FC<CellProps> = ({
+    row,
+    col,
     value,
     notes,
     notesMode,
@@ -33,7 +37,7 @@ const Cell: React.FC<CellProps> = ({
     let bgClass = "bg-amber-50";
 
     if (isHinted) {
-        bgClass = "bg-amber-50-50";
+        bgClass = "bg-amber-50/50";
     } else if (isSelected) {
         bgClass = notesMode
             ? "bg-yellow-100 shadow-[inset_0_0_0_2px_#ca8a04] "
@@ -66,9 +70,6 @@ const Cell: React.FC<CellProps> = ({
             onPointerDown={(e) => {
                 // Only trigger on left-click or touch, ignore right-click
                 if (e.button === 0 || e.pointerType === "touch") {
-                    (e.target as HTMLElement).releasePointerCapture(
-                        e.pointerId,
-                    ); // Allows dragging over other elements
                     onPointerDown();
                 }
             }}
@@ -81,9 +82,9 @@ const Cell: React.FC<CellProps> = ({
         ${!isSelected ? "hover:bg-blue-50" : ""}
         ${isSelected ? "ring-2 ring-blue-700 ring-inset z-10" : ""}
         ${isHinted ? "ring-2 ring-amber-400 ring-inset z-10" : ""}
-        focus:outline-none
+        focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-inset
       `}
-            aria-label={`Cell, value ${value || "empty"}`}
+            aria-label={`Row ${row + 1}, Column ${col + 1}, value ${value || "empty"}`}
         >
             {value !== null ? (
                 <span className="leading-none">{value}</span>

@@ -139,7 +139,7 @@ const VictoryModal: React.FC<VictoryModalProps> = ({
                     </div>
 
                     {isNewBest && (
-                        <div className="mb-4 py-2.5 px-4 bg-amber-50-300 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-2">
+                        <div className="mb-4 py-2.5 px-4 bg-amber-300 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-2">
                             <span className="text-lg">⭐</span>
                             <p className="text-sm font-black text-gray-900">
                                 New Personal Best!

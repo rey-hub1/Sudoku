@@ -6,6 +6,7 @@ interface NumberPadProps {
     solution: Board;
     notesMode: boolean;
     notesDisabled?: boolean;
+    hintDisabled?: boolean;
     onNumber: (num: number) => void;
     onErase: () => void;
     onToggleNotes: () => void;
@@ -60,6 +61,7 @@ const NumberPad: React.FC<NumberPadProps> = ({
     solution,
     notesMode,
     notesDisabled = false,
+    hintDisabled = false,
     onNumber,
     onErase,
     onToggleNotes,
@@ -81,7 +83,7 @@ const NumberPad: React.FC<NumberPadProps> = ({
     }, [board, solution]);
 
     const actionCols =
-        (showUndo ? 1 : 0) + 1 + (notesDisabled ? 0 : 1) + 1;
+        (showUndo ? 1 : 0) + 1 + (notesDisabled ? 0 : 1) + (hintDisabled ? 0 : 1);
 
     return (
         <div className="flex flex-col gap-3 w-full">
@@ -157,28 +159,30 @@ const NumberPad: React.FC<NumberPadProps> = ({
                         </svg>
                     </ActionBtn>
                 )}
-                <ActionBtn
-                    onClick={onHint}
-                    disabled={disabled}
-                    color="amber"
-                    label="Hint"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                {!hintDisabled && (
+                    <ActionBtn
+                        onClick={onHint}
+                        disabled={disabled}
+                        color="amber"
+                        label="Hint"
                     >
-                        <path d="M9 18h6" />
-                        <path d="M10 22h4" />
-                        <path d="M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 01-1 1h-6a1 1 0 01-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z" />
-                    </svg>
-                </ActionBtn>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <path d="M9 18h6" />
+                            <path d="M10 22h4" />
+                            <path d="M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 01-1 1h-6a1 1 0 01-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z" />
+                        </svg>
+                    </ActionBtn>
+                )}
             </div>
 
             {/* Number buttons */}

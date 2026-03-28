@@ -7,9 +7,6 @@ interface CellProps {
     notes: Set<number>;
     notesMode: boolean;
     notesDisabled?: boolean;
-    heat?: number;
-    heatMax?: number;
-    heatmapEnabled?: boolean;
     isGiven: boolean;
     isSelected: boolean;
     isHighlighted: boolean;
@@ -28,9 +25,6 @@ const Cell: React.FC<CellProps> = ({
     notes,
     notesMode,
     notesDisabled = false,
-    heat = 0,
-    heatMax = 0,
-    heatmapEnabled = false,
     isGiven,
     isSelected,
     isHighlighted,
@@ -50,8 +44,6 @@ const Cell: React.FC<CellProps> = ({
         bgClass = notesMode
             ? "bg-yellow-100 shadow-[inset_0_0_0_2px_#ca8a04] "
             : "bg-blue-200";
-    } else if (isConflict) {
-        bgClass = "bg-red-100";
     } else if (isSameNumber) {
         bgClass = "bg-blue-100";
     } else if (isHighlighted) {
@@ -94,17 +86,6 @@ const Cell: React.FC<CellProps> = ({
       `}
             aria-label={`Row ${row + 1}, Column ${col + 1}, value ${value || "empty"}`}
         >
-            {heatmapEnabled && heatMax > 0 && heat > 0 && !isSelected && (
-                <span
-                    className="absolute inset-0 pointer-events-none"
-                    style={{
-                        backgroundColor: `rgba(59, 130, 246, ${Math.min(
-                            0.6,
-                            (heat / heatMax) * 0.6,
-                        )})`,
-                    }}
-                />
-            )}
             {value !== null ? (
                 <span className="leading-none relative z-10">{value}</span>
             ) : !notesDisabled && notes.size > 0 ? (

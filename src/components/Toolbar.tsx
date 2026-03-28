@@ -7,6 +7,7 @@ interface ToolbarProps {
     mistakes: number;
     maxMistakes: number;
     bestTime: number | null;
+    hideMistakes?: boolean;
     onNewGame: (difficulty: Difficulty) => void;
 }
 
@@ -30,6 +31,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
     mistakes,
     maxMistakes,
     bestTime,
+    hideMistakes = false,
     onNewGame,
 }) => {
     return (
@@ -82,25 +84,33 @@ const Toolbar: React.FC<ToolbarProps> = ({
                     </span>
                 </div>
 
-                {/* Divider */}
-                <div className="w-px h-8 bg-gray-200" />
+                {!hideMistakes && (
+                    <>
+                        {/* Divider */}
+                        <div className="w-px h-8 bg-gray-200" />
 
-                {/* Mistakes */}
-                <div className="flex flex-col items-center">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 leading-none mb-1">
-                        Mistakes
-                    </span>
-                    <div className="flex gap-1 items-center">
-                        {Array.from({ length: maxMistakes }).map((_, i) => (
-                            <div
-                                key={i}
-                                className={`w-3 h-3 border-2 border-gray-900 transition-colors ${
-                                    i < mistakes ? "bg-red-500" : "bg-amber-50"
-                                }`}
-                            />
-                        ))}
-                    </div>
-                </div>
+                        {/* Mistakes */}
+                        <div className="flex flex-col items-center">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 leading-none mb-1">
+                                Mistakes
+                            </span>
+                            <div className="flex gap-1 items-center">
+                                {Array.from({ length: maxMistakes }).map(
+                                    (_, i) => (
+                                        <div
+                                            key={i}
+                                            className={`w-3 h-3 border-2 border-gray-900 transition-colors ${
+                                                i < mistakes
+                                                    ? "bg-red-500"
+                                                    : "bg-amber-50"
+                                            }`}
+                                        />
+                                    ),
+                                )}
+                            </div>
+                        </div>
+                    </>
+                )}
 
                 {/* Divider */}
                 {bestTime !== null && <div className="w-px h-8 bg-gray-200" />}

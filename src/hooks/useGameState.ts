@@ -40,11 +40,6 @@ export interface GameState {
   recentAchievements: Achievement[];
   moveTimes: number[];
   lastMoveAt: number | null;
-  heatmap: number[][];
-  isDaily: boolean;
-  dailyDateKey: string | null;
-  dailyStreak: number;
-  lastDailyCompleted: string | null;
   history: { board: Board; notes: NotesBoard }[];
   isGenerating: boolean;
 }
@@ -62,9 +57,6 @@ interface SavedState {
   hintsUsed?: number;
   moveTimes?: number[];
   lastMoveAt?: number | null;
-  heatmap?: number[][];
-  isDaily?: boolean;
-  dailyDateKey?: string | null;
 }
 
 interface Achievement {
@@ -78,7 +70,6 @@ interface Achievement {
 const SAVE_KEY = 'sudoku-save';
 const BEST_TIMES_KEY = 'sudoku-best-times';
 const ACHIEVEMENTS_KEY = 'sudoku-achievements';
-const DAILY_PROGRESS_KEY = 'sudoku-daily-progress';
 
 const ACHIEVEMENTS: Achievement[] = [
   {
@@ -137,9 +128,6 @@ function saveGame(state: GameState) {
     hintsUsed: state.hintsUsed,
     moveTimes: state.moveTimes,
     lastMoveAt: state.lastMoveAt,
-    heatmap: state.heatmap,
-    isDaily: state.isDaily,
-    dailyDateKey: state.dailyDateKey,
   };
   localStorage.setItem(SAVE_KEY, JSON.stringify(data));
 }
@@ -156,34 +144,6 @@ function clearSave() {
   localStorage.removeItem(SAVE_KEY);
 }
 
-function createEmptyHeatmap(): number[][] {
-  return Array.from({ length: 9 }, () => Array(9).fill(0));
-}
-
-function getLocalDateKey(date: Date = new Date()): string {
-  const y = date.getFullYear();
-  const m = `${date.getMonth() + 1}`.padStart(2, '0');
-  const d = `${date.getDate()}`.padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-function addDays(date: Date, days: number): Date {
-  const copy = new Date(date);
-  copy.setDate(copy.getDate() + days);
-  return copy;
-}
-
-function loadDailyProgress(): { streak: number; lastCompleted: string | null } {
-  try {
-    const saved = localStorage.getItem(DAILY_PROGRESS_KEY);
-    if (saved) return JSON.parse(saved);
-  } catch { /* ignore */ }
-  return { streak: 0, lastCompleted: null };
-}
-
-function saveDailyProgress(progress: { streak: number; lastCompleted: string | null }) {
-  localStorage.setItem(DAILY_PROGRESS_KEY, JSON.stringify(progress));
-}
 
 function loadAchievements(): Record<string, boolean> {
   try {
@@ -236,7 +196,6 @@ export function useGameState() {
   const needsInitialGenerateRef = useRef<boolean>(savedRef.current === null);
   const workerRef = useRef<Worker | null>(null);
   const requestIdRef = useRef(0);
-  const dailyProgressRef = useRef(loadDailyProgress());
 
   const [state, setState] = useState<GameState>(() => {
     const saved = savedRef.current;
@@ -267,11 +226,6 @@ export function useGameState() {
         recentAchievements: [],
         moveTimes: saved.moveTimes ?? [],
         lastMoveAt: saved.lastMoveAt ?? null,
-        heatmap: saved.heatmap ?? createEmptyHeatmap(),
-        isDaily: saved.isDaily ?? false,
-        dailyDateKey: saved.dailyDateKey ?? null,
-        dailyStreak: dailyProgressRef.current.streak,
-        lastDailyCompleted: dailyProgressRef.current.lastCompleted,
         history: [],
         isGenerating: false,
       };
@@ -302,11 +256,6 @@ export function useGameState() {
       recentAchievements: [],
       moveTimes: [],
       lastMoveAt: null,
-      heatmap: createEmptyHeatmap(),
-      isDaily: false,
-      dailyDateKey: null,
-      dailyStreak: dailyProgressRef.current.streak,
-      lastDailyCompleted: dailyProgressRef.current.lastCompleted,
       history: [],
       isGenerating: true,
     };
@@ -371,7 +320,7 @@ export function useGameState() {
     solution: Board,
     difficulty: Difficulty,
     requestId: number,
-    meta?: { mode?: 'normal' | 'daily' | 'shared'; dailyDateKey?: string },
+    _meta?: { mode?: 'normal' | 'shared' },
   ) => {
     if (requestId !== requestIdRef.current) return;
     clearSave();
@@ -400,11 +349,6 @@ export function useGameState() {
       recentAchievements: [],
       moveTimes: [],
       lastMoveAt: null,
-      heatmap: createEmptyHeatmap(),
-      isDaily: meta?.mode === 'daily',
-      dailyDateKey: meta?.dailyDateKey ?? null,
-      dailyStreak: prev.dailyStreak,
-      lastDailyCompleted: prev.lastDailyCompleted,
       history: [],
       isGenerating: false,
     }));
@@ -430,6 +374,7 @@ export function useGameState() {
     setState(prev => {
       // You can only update selection if a start point exists
       if (!prev.selectionStart) return prev;
+      if (prev.difficulty === 'expert_plus') return prev;
       return { ...prev, selectionEnd: cell };
     });
   }, []);
@@ -458,41 +403,13 @@ export function useGameState() {
     }
   }, []);
 
-  const recordMoveAnalytics = useCallback((prev: GameState, changedCells: CellPosition[]) => {
+  const recordMoveAnalytics = useCallback((prev: GameState) => {
     const now = Date.now();
     const moveTimes = prev.lastMoveAt === null
       ? prev.moveTimes
       : [...prev.moveTimes, (now - prev.lastMoveAt) / 1000];
     const trimmedMoveTimes = moveTimes.slice(-500);
-
-    const heatmap = prev.heatmap.map(row => [...row]);
-    for (const cell of changedCells) {
-      heatmap[cell.row][cell.col] += 1;
-    }
-
-    return { moveTimes: trimmedMoveTimes, lastMoveAt: now, heatmap };
-  }, []);
-
-  const applyDailyCompletion = useCallback((prev: GameState) => {
-    if (!prev.isDaily || !prev.dailyDateKey) {
-      return { dailyStreak: prev.dailyStreak, lastDailyCompleted: prev.lastDailyCompleted };
-    }
-
-    const todayKey = getLocalDateKey();
-    if (prev.dailyDateKey !== todayKey) {
-      return { dailyStreak: prev.dailyStreak, lastDailyCompleted: prev.lastDailyCompleted };
-    }
-
-    if (prev.lastDailyCompleted === todayKey) {
-      return { dailyStreak: prev.dailyStreak, lastDailyCompleted: prev.lastDailyCompleted };
-    }
-
-    const yesterdayKey = getLocalDateKey(addDays(new Date(), -1));
-    const newStreak =
-      prev.lastDailyCompleted === yesterdayKey ? prev.dailyStreak + 1 : 1;
-
-    saveDailyProgress({ streak: newStreak, lastCompleted: todayKey });
-    return { dailyStreak: newStreak, lastDailyCompleted: todayKey };
+    return { moveTimes: trimmedMoveTimes, lastMoveAt: now };
   }, []);
 
   const inputNumber = useCallback((num: number) => {
@@ -560,7 +477,6 @@ export function useGameState() {
         ? createEmptyNotes()
         : prev.notes.map(r => r.map(c => new Set(c)));
       let madeChange = false;
-      const changedCells: CellPosition[] = [];
 
       for (let r = minRow; r <= maxRow; r++) {
         for (let c = minCol; c <= maxCol; c++) {
@@ -568,7 +484,6 @@ export function useGameState() {
             newBoard[r][c] = num;
             newNotes[r][c].clear();
             madeChange = true;
-            changedCells.push({ row: r, col: c });
             
             // Also clear this number from notes in same row, col, and box
             if (!notesDisabled) {
@@ -623,8 +538,6 @@ export function useGameState() {
       let isRunning = prev.isRunning;
       let achievements = prev.achievements;
       let recentAchievements: Achievement[] = [];
-      let dailyStreak = prev.dailyStreak;
-      let lastDailyCompleted = prev.lastDailyCompleted;
 
       if (isBoardComplete(newBoard) && isBoardCorrect(newBoard, prev.solution)) {
         isComplete = true;
@@ -648,12 +561,9 @@ export function useGameState() {
         recentAchievements = unlocked.recent;
         saveAchievements(achievements);
 
-        const dailyProgress = applyDailyCompletion(prev);
-        dailyStreak = dailyProgress.dailyStreak;
-        lastDailyCompleted = dailyProgress.lastDailyCompleted;
       }
 
-      const analytics = recordMoveAnalytics(prev, changedCells);
+      const analytics = recordMoveAnalytics(prev);
 
       return {
         ...prev,
@@ -667,15 +577,12 @@ export function useGameState() {
         conflicts,
         achievements,
         recentAchievements,
-        dailyStreak,
-        lastDailyCompleted,
         moveTimes: analytics.moveTimes,
         lastMoveAt: analytics.lastMoveAt,
-        heatmap: analytics.heatmap,
         history: [...prev.history, historyEntry],
       };
     });
-  }, [pruneInvalidNotes, recordMoveAnalytics, applyDailyCompletion]);
+  }, [pruneInvalidNotes, recordMoveAnalytics]);
 
   const eraseCell = useCallback(() => {
     setState(prev => {
@@ -695,7 +602,6 @@ export function useGameState() {
       const newBoard = prev.board.map(r => [...r]);
       const newNotes = prev.notes.map(r => r.map(c => new Set(c)));
       let madeChange = false;
-      const changedCells: CellPosition[] = [];
 
       for (let r = minRow; r <= maxRow; r++) {
         for (let c = minCol; c <= maxCol; c++) {
@@ -703,7 +609,6 @@ export function useGameState() {
             newBoard[r][c] = null;
             newNotes[r][c].clear();
             madeChange = true;
-            changedCells.push({ row: r, col: c });
           }
         }
       }
@@ -714,7 +619,7 @@ export function useGameState() {
         pruneInvalidNotes(newBoard, newNotes, prev.initialBoard);
       }
       const conflicts = getAllConflicts(newBoard);
-      const analytics = recordMoveAnalytics(prev, changedCells);
+      const analytics = recordMoveAnalytics(prev);
 
       return {
         ...prev,
@@ -723,7 +628,6 @@ export function useGameState() {
         conflicts,
         moveTimes: analytics.moveTimes,
         lastMoveAt: analytics.lastMoveAt,
-        heatmap: analytics.heatmap,
         history: [...prev.history, historyEntry],
       };
     });
@@ -747,7 +651,8 @@ export function useGameState() {
   const requestHint = useCallback(() => {
     setState(prev => {
       if (prev.isComplete || prev.isGameOver) return prev;
-      const notesDisabled = prev.difficulty === 'expert_plus';
+      if (prev.difficulty === 'expert_plus') return prev;
+      const notesDisabled = false;
 
       // If hint is already showing, progress its tier
       if (prev.hint) {
@@ -778,8 +683,6 @@ export function useGameState() {
         let isRunning = prev.isRunning;
         let achievements = prev.achievements;
         let recentAchievements: Achievement[] = [];
-        let dailyStreak = prev.dailyStreak;
-        let lastDailyCompleted = prev.lastDailyCompleted;
 
         if (isBoardComplete(newBoard) && isBoardCorrect(newBoard, prev.solution)) {
           isComplete = true;
@@ -803,9 +706,6 @@ export function useGameState() {
           recentAchievements = unlocked.recent;
           saveAchievements(achievements);
 
-          const dailyProgress = applyDailyCompletion(prev);
-          dailyStreak = dailyProgress.dailyStreak;
-          lastDailyCompleted = dailyProgress.lastDailyCompleted;
         }
 
         return {
@@ -823,8 +723,6 @@ export function useGameState() {
           history: [...prev.history, historyEntry],
           achievements,
           recentAchievements,
-          dailyStreak,
-          lastDailyCompleted,
         };
         }
 
@@ -843,7 +741,7 @@ export function useGameState() {
         selectionEnd: hint.cell,
       };
     });
-  }, [pruneInvalidNotes, applyDailyCompletion]);
+  }, [pruneInvalidNotes]);
 
   const newGame = useCallback((difficulty?: Difficulty) => {
     const diff = difficulty || state.difficulty;
@@ -855,14 +753,6 @@ export function useGameState() {
       applyNewPuzzle(puzzle, solution, diff, requestId, { mode: 'normal' });
     });
   }, [state.difficulty, applyNewPuzzle, generatePuzzleAsync]);
-
-  const startDailyChallenge = useCallback(() => {
-    const todayKey = getLocalDateKey();
-    setState(prev => ({ ...prev, isGenerating: true, recentAchievements: [] }));
-    generatePuzzleAsync('medium', `daily-${todayKey}`).then(({ puzzle, solution, requestId }) => {
-      applyNewPuzzle(puzzle, solution, 'medium', requestId, { mode: 'daily', dailyDateKey: todayKey });
-    });
-  }, [applyNewPuzzle, generatePuzzleAsync]);
 
   const getShareCode = useCallback(() => {
     return encodePuzzleCode(state.initialBoard, state.solution, state.difficulty);
@@ -929,7 +819,6 @@ export function useGameState() {
       undo,
       requestHint,
       newGame,
-      startDailyChallenge,
       getShareCode,
       loadFromCode,
       restartGame,

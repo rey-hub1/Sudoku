@@ -8,8 +8,7 @@ interface SudokuGridProps {
     notes: NotesBoard;
     notesMode: boolean;
     notesDisabled?: boolean;
-    heatmap?: number[][];
-    heatmapEnabled?: boolean;
+    disableMultiSelect?: boolean;
     selectionStart: CellPosition | null;
     selectionEnd: CellPosition | null;
     conflicts: Set<string>;
@@ -25,8 +24,7 @@ const SudokuGrid: React.FC<SudokuGridProps> = ({
     notes,
     notesMode,
     notesDisabled = false,
-    heatmap,
-    heatmapEnabled = false,
+    disableMultiSelect = false,
     selectionStart,
     selectionEnd,
     conflicts,
@@ -54,10 +52,11 @@ const SudokuGrid: React.FC<SudokuGridProps> = ({
     const handleCellPointerEnter = useCallback(
         (row: number, col: number) => {
             if (isDragging) {
+                if (disableMultiSelect) return;
                 onSelectionUpdate({ row, col });
             }
         },
-        [isDragging, onSelectionUpdate],
+        [isDragging, onSelectionUpdate, disableMultiSelect],
     );
 
     // Derived selection bounding box
@@ -129,17 +128,6 @@ const SudokuGrid: React.FC<SudokuGridProps> = ({
         return set;
     }, [selectionBounds, board]);
 
-    const heatMax = useMemo(() => {
-        if (!heatmapEnabled || !heatmap) return 0;
-        let max = 0;
-        for (let r = 0; r < 9; r++) {
-            for (let c = 0; c < 9; c++) {
-                max = Math.max(max, heatmap[r][c]);
-            }
-        }
-        return max;
-    }, [heatmapEnabled, heatmap]);
-
     return (
         <div className="inline-block border-4 border-gray-900 overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-gray-900">
             <div
@@ -191,19 +179,13 @@ const SudokuGrid: React.FC<SudokuGridProps> = ({
                                                     notesMode || isMultiSelect
                                                 }
                                                 notesDisabled={notesDisabled}
-                                                heat={
-                                                    heatmapEnabled && heatmap
-                                                        ? heatmap[r][c]
-                                                        : 0
-                                                }
-                                                heatMax={heatMax}
-                                                heatmapEnabled={heatmapEnabled}
                                                 isGiven={isGiven}
                                                 isSelected={isSelected}
                                                 isHighlighted={highlightedCells.has(
                                                     key,
                                                 )}
                                                 isSameNumber={
+                                                    !notesDisabled &&
                                                     sameNumberCells.has(key) &&
                                                     !isSelected
                                                 }

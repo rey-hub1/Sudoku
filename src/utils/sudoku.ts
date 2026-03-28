@@ -529,17 +529,12 @@ function stringToBoard(str: string): Board | null {
 }
 
 function encodeBase64(data: string): string {
-  if (typeof btoa !== 'undefined') return btoa(data);
-  // Fallback for environments with Buffer
-  // eslint-disable-next-line no-undef
-  return Buffer.from(data, 'utf-8').toString('base64');
+  return btoa(data);
 }
 
 function decodeBase64(data: string): string | null {
   try {
-    if (typeof atob !== 'undefined') return atob(data);
-    // eslint-disable-next-line no-undef
-    return Buffer.from(data, 'base64').toString('utf-8');
+    return atob(data);
   } catch {
     return null;
   }

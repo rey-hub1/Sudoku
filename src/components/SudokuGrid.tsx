@@ -128,7 +128,50 @@ const SudokuGrid: React.FC<SudokuGridProps> = ({
         return set;
     }, [selectionBounds, board]);
 
+    // Compute "hidden singles" — a note digit that appears only once
+    // in a row, column, or box. That means the answer MUST go there.
+    const soloNotesMap = useMemo(() => {
+        const map = new Map<string, Set<number>>();
+        const mark = (r: number, c: number, digit: number) => {
+            const key = `${r},${c}`;
+            if (!map.has(key)) map.set(key, new Set());
+            map.get(key)!.add(digit);
+        };
+        for (let digit = 1; digit <= 9; digit++) {
+            // rows
+            for (let r = 0; r < 9; r++) {
+                const cells: [number, number][] = [];
+                for (let c = 0; c < 9; c++) {
+                    if (board[r][c] === null && notes[r][c].has(digit)) cells.push([r, c]);
+                }
+                if (cells.length === 1) mark(cells[0][0], cells[0][1], digit);
+            }
+            // cols
+            for (let c = 0; c < 9; c++) {
+                const cells: [number, number][] = [];
+                for (let r = 0; r < 9; r++) {
+                    if (board[r][c] === null && notes[r][c].has(digit)) cells.push([r, c]);
+                }
+                if (cells.length === 1) mark(cells[0][0], cells[0][1], digit);
+            }
+            // boxes
+            for (let box = 0; box < 9; box++) {
+                const boxRow = Math.floor(box / 3) * 3;
+                const boxCol = (box % 3) * 3;
+                const cells: [number, number][] = [];
+                for (let br = boxRow; br < boxRow + 3; br++) {
+                    for (let bc = boxCol; bc < boxCol + 3; bc++) {
+                        if (board[br][bc] === null && notes[br][bc].has(digit)) cells.push([br, bc]);
+                    }
+                }
+                if (cells.length === 1) mark(cells[0][0], cells[0][1], digit);
+            }
+        }
+        return map;
+    }, [board, notes]);
+
     return (
+
         <div className="inline-block border-4 border-gray-900 overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-gray-900">
             <div
                 className="grid grid-cols-3 gap-1.5 bg-gray-900"
@@ -175,6 +218,7 @@ const SudokuGrid: React.FC<SudokuGridProps> = ({
                                                 col={c}
                                                 value={value}
                                                 notes={notes[r][c]}
+                                                soloNotes={soloNotesMap.get(key) ?? new Set()}
                                                 notesMode={
                                                     notesMode || isMultiSelect
                                                 }

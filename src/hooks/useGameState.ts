@@ -8,7 +8,6 @@ import {
   isBoardCorrect,
   createEmptyNotes,
   createEmptyBoard,
-  getCandidates,
   encodePuzzleCode,
   decodePuzzleCode,
 } from '../utils/sudoku';
@@ -391,13 +390,6 @@ export function useGameState() {
       for (let c = 0; c < 9; c++) {
         if (initialBoard[r][c] !== null || board[r][c] !== null) {
           notes[r][c].clear();
-          continue;
-        }
-        const candidates = new Set(getCandidates(board, r, c));
-        for (const note of Array.from(notes[r][c])) {
-          if (!candidates.has(note)) {
-            notes[r][c].delete(note);
-          }
         }
       }
     }

@@ -5,6 +5,7 @@ interface CellProps {
     col: number;
     value: number | null;
     notes: Set<number>;
+    soloNotes: Set<number>;
     notesMode: boolean;
     notesDisabled?: boolean;
     isGiven: boolean;
@@ -23,6 +24,7 @@ const Cell: React.FC<CellProps> = ({
     col,
     value,
     notes,
+    soloNotes,
     notesMode,
     notesDisabled = false,
     isGiven,
@@ -93,14 +95,16 @@ const Cell: React.FC<CellProps> = ({
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
                         <span
                             key={n}
-                            className={`flex items-center justify-center text-[7px] sm:text-[9px] leading-none font-bold ${
+                            className={`flex items-center justify-center text-[7px] sm:text-[9px] leading-none transition-colors duration-200 ${
                                 notes.has(n)
-                                    ? isSelected
-                                        ? notesMode
-                                            ? "text-gray-900"
-                                            : "text-blue-800"
-                                        : "text-blue-500"
-                                    : "text-transparent"
+                                    ? soloNotes.has(n)
+                                        ? "font-black text-blue-950 drop-shadow-[0_0_3px_rgba(30,58,138,0.5)]"
+                                        : isSelected
+                                          ? notesMode
+                                              ? "font-bold text-gray-900"
+                                              : "font-bold text-blue-800"
+                                          : "font-bold text-blue-500"
+                                    : "font-bold text-transparent"
                             }`}
                         >
                             {n}

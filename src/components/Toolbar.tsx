@@ -8,6 +8,8 @@ interface ToolbarProps {
     maxMistakes: number;
     bestTime: number | null;
     hideMistakes?: boolean;
+    isPaused: boolean;
+    onTogglePause: () => void;
     onNewGame: (difficulty: Difficulty) => void;
 }
 
@@ -32,6 +34,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
     maxMistakes,
     bestTime,
     hideMistakes = false,
+    isPaused,
+    onTogglePause,
     onNewGame,
 }) => {
     return (
@@ -62,23 +66,22 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <div className="flex items-center justify-between bg-amber-50 border-2 border-gray-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-3 gap-3">
                 {/* Timer */}
                 <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 flex items-center justify-center bg-blue-50 border border-gray-200">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="text-blue-600"
-                        >
-                            <circle cx="12" cy="12" r="10" />
-                            <polyline points="12 6 12 12 16 14" />
-                        </svg>
-                    </div>
+                    <button
+                        onClick={onTogglePause}
+                        className="w-7 h-7 flex items-center justify-center bg-blue-50 border-2 border-transparent hover:border-gray-900 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-px hover:-translate-x-px transition-all cursor-pointer"
+                        title={isPaused ? "Resume game" : "Pause game"}
+                    >
+                        {isPaused ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-blue-600">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                        ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-blue-600">
+                                <rect x="6" y="4" width="4" height="16"></rect>
+                                <rect x="14" y="4" width="4" height="16"></rect>
+                            </svg>
+                        )}
+                    </button>
                     <span className="text-xl font-black text-gray-900 tabular-nums tracking-tight leading-none">
                         {formatTime(timer)}
                     </span>

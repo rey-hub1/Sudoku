@@ -9,6 +9,7 @@ interface SudokuGridProps {
     notesMode: boolean;
     notesDisabled?: boolean;
     disableMultiSelect?: boolean;
+    disabled?: boolean;
     selectionStart: CellPosition | null;
     selectionEnd: CellPosition | null;
     conflicts: Set<string>;
@@ -25,6 +26,7 @@ const SudokuGrid: React.FC<SudokuGridProps> = ({
     notesMode,
     notesDisabled = false,
     disableMultiSelect = false,
+    disabled = false,
     selectionStart,
     selectionEnd,
     conflicts,
@@ -43,20 +45,22 @@ const SudokuGrid: React.FC<SudokuGridProps> = ({
 
     const handleCellPointerDown = useCallback(
         (row: number, col: number) => {
+            if (disabled) return;
             setIsDragging(true);
             onSelectionStart({ row, col });
         },
-        [onSelectionStart],
+        [onSelectionStart, disabled],
     );
 
     const handleCellPointerEnter = useCallback(
         (row: number, col: number) => {
+            if (disabled) return;
             if (isDragging) {
                 if (disableMultiSelect) return;
                 onSelectionUpdate({ row, col });
             }
         },
-        [isDragging, onSelectionUpdate, disableMultiSelect],
+        [isDragging, onSelectionUpdate, disableMultiSelect, disabled],
     );
 
     // Derived selection bounding box

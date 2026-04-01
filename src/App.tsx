@@ -29,6 +29,17 @@ function App() {
         (e: KeyboardEvent) => {
             if (state.isComplete || state.isGameOver) return;
 
+            if (e.key === "p" || e.key === "P") {
+                actions.togglePause();
+                return;
+            }
+            if (e.key === "Escape" && state.isPaused) {
+                actions.togglePause();
+                return;
+            }
+
+            if (state.isPaused) return;
+
             const num = parseInt(e.key);
             if (num >= 1 && num <= 9) {
                 actions.inputNumber(num);
@@ -90,8 +101,10 @@ function App() {
         [
             state.isComplete,
             state.isGameOver,
+            state.isPaused,
             state.selectionStart,
             state.selectionEnd,
+            state.difficulty,
             actions,
         ],
     );
@@ -285,6 +298,8 @@ function App() {
                         maxMistakes={state.maxMistakes}
                         bestTime={state.bestTimes[state.difficulty]}
                         hideMistakes={state.difficulty === "expert_plus"}
+                        isPaused={state.isPaused}
+                        onTogglePause={actions.togglePause}
                         onNewGame={actions.newGame}
                     />
 
@@ -296,21 +311,62 @@ function App() {
                             </div>
                         </div>
                     ) : (
-                        <SudokuGrid
-                            board={state.board}
-                            initialBoard={state.initialBoard}
-                            notes={state.notes}
-                            notesMode={state.notesMode}
-                            notesDisabled={state.difficulty === "expert_plus"}
-                            disableMultiSelect={state.difficulty === "expert_plus"}
-                            selectionStart={state.selectionStart}
-                            selectionEnd={state.selectionEnd}
-                            conflicts={state.difficulty === "expert_plus" ? new Set() : state.conflicts}
-                            wrongCells={state.difficulty === "expert_plus" ? new Set() : state.wrongCells}
-                            hintCell={state.hint?.cell ?? null}
-                            onSelectionStart={actions.startSelection}
-                            onSelectionUpdate={actions.updateSelection}
-                        />
+                        <div className="relative w-full max-w-[500px] aspect-square flex items-center justify-center">
+                            {state.isPaused && (
+                                <div className="absolute inset-0 z-10 flex items-center justify-center">
+                                    <div className="absolute inset-0 bg-gray-900/55 backdrop-blur-md" />
+                                    <div className="relative z-10 mx-4 w-full max-w-[420px] border-2 border-gray-900 bg-gradient-to-br from-white/95 via-white/90 to-amber-50/90 text-gray-900 shadow-[14px_14px_0px_0px_rgba(0,0,0,1)] backdrop-blur-xl p-7 sm:p-8 animate-[fadeIn_0.2s_ease-out]">
+                                        <div className="absolute -top-3 -right-3 w-12 h-12 bg-blue-600 border-2 border-gray-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rotate-6" />
+                                        <div className="flex items-center gap-4 mb-5">
+                                            <div className="w-12 h-12 flex items-center justify-center bg-gray-900 text-white border-2 border-gray-900 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] text-xl font-black">
+                                                II
+                                            </div>
+                                            <div>
+                                                <div className="text-3xl sm:text-4xl font-black tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                                                    Game Paused
+                                                </div>
+                                                <div className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-500">
+                                                    Take a breather
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p className="text-sm font-semibold text-gray-600 mb-6">
+                                            Press <span className="font-black text-gray-900">P</span> or <span className="font-black text-gray-900">Esc</span> to resume.
+                                        </p>
+                                        <button
+                                            onClick={actions.togglePause}
+                                            className="w-full px-8 py-4 text-sm sm:text-base font-black uppercase tracking-wider bg-blue-600 text-white border-2 border-gray-900 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer"
+                                        >
+                                            Resume Game
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                            <div
+                                className={`transition-all duration-200 ${
+                                    state.isPaused
+                                        ? "blur-[2px] brightness-90 saturate-50 scale-[0.985]"
+                                        : ""
+                                }`}
+                            >
+                                <SudokuGrid
+                                    board={state.board}
+                                    initialBoard={state.initialBoard}
+                                    notes={state.notes}
+                                    notesMode={state.notesMode}
+                                    notesDisabled={state.difficulty === "expert_plus"}
+                                    disableMultiSelect={state.difficulty === "expert_plus"}
+                                    disabled={state.isPaused || state.isComplete || state.isGameOver}
+                                    selectionStart={state.selectionStart}
+                                    selectionEnd={state.selectionEnd}
+                                    conflicts={state.difficulty === "expert_plus" ? new Set() : state.conflicts}
+                                    wrongCells={state.difficulty === "expert_plus" ? new Set() : state.wrongCells}
+                                    hintCell={state.hint?.cell ?? null}
+                                    onSelectionStart={actions.startSelection}
+                                    onSelectionUpdate={actions.updateSelection}
+                                />
+                            </div>
+                        </div>
                     )}
 
                     {state.difficulty !== "expert_plus" && (
@@ -337,7 +393,7 @@ function App() {
                         onToggleNotes={actions.toggleNotesMode}
                         onUndo={actions.undo}
                         onHint={actions.requestHint}
-                        disabled={state.isComplete || state.isGameOver}
+                        disabled={state.isComplete || state.isGameOver || state.isPaused}
                         notesDisabled={state.difficulty === "expert_plus"}
                         hintDisabled={state.difficulty === "expert_plus"}
                         showUndo={state.difficulty === "easy"}
@@ -351,7 +407,7 @@ function App() {
                             { keys: "1-9", label: "Input" },
                             { keys: "N", label: "Notes" },
                             { keys: "ARROWS", label: "Move" },
-                            { keys: "CTRL+Z", label: "Undo" },
+                            { keys: "P", label: "Pause" },
                         ].map(({ keys, label }) => (
                             <div key={label} className="flex items-center gap-1.5 whitespace-nowrap">
                                 <kbd className="px-2 py-1 bg-white border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-[10px] sm:text-xs font-mono font-black text-gray-900">

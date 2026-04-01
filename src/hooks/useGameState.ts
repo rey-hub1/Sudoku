@@ -41,6 +41,7 @@ export interface GameState {
   lastMoveAt: number | null;
   history: { board: Board; notes: NotesBoard }[];
   isGenerating: boolean;
+  isPaused: boolean;
 }
 
 interface SavedState {
@@ -56,6 +57,7 @@ interface SavedState {
   hintsUsed?: number;
   moveTimes?: number[];
   lastMoveAt?: number | null;
+  isPaused?: boolean;
 }
 
 interface Achievement {
@@ -127,6 +129,7 @@ function saveGame(state: GameState) {
     hintsUsed: state.hintsUsed,
     moveTimes: state.moveTimes,
     lastMoveAt: state.lastMoveAt,
+    isPaused: state.isPaused,
   };
   localStorage.setItem(SAVE_KEY, JSON.stringify(data));
 }
@@ -227,6 +230,7 @@ export function useGameState() {
         lastMoveAt: saved.lastMoveAt ?? null,
         history: [],
         isGenerating: false,
+        isPaused: saved.isPaused ?? false,
       };
     }
 
@@ -257,6 +261,7 @@ export function useGameState() {
       lastMoveAt: null,
       history: [],
       isGenerating: true,
+      isPaused: false,
     };
   });
 
@@ -264,7 +269,7 @@ export function useGameState() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (state.isRunning && !state.isComplete && !state.isGameOver) {
+    if (state.isRunning && !state.isComplete && !state.isGameOver && !state.isPaused) {
       timerRef.current = setInterval(() => {
         setState(prev => ({ ...prev, timer: prev.timer + 1 }));
       }, 1000);
@@ -272,7 +277,7 @@ export function useGameState() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [state.isRunning, state.isComplete, state.isGameOver]);
+  }, [state.isRunning, state.isComplete, state.isGameOver, state.isPaused]);
 
   // Auto-save
   useEffect(() => {
@@ -350,6 +355,7 @@ export function useGameState() {
       lastMoveAt: null,
       history: [],
       isGenerating: false,
+      isPaused: false,
     }));
   }, []);
 
@@ -366,13 +372,16 @@ export function useGameState() {
   // ─── Actions ─────────────────────────────────────────────────────
 
   const startSelection = useCallback((cell: CellPosition | null) => {
-    setState(prev => ({ ...prev, selectionStart: cell, selectionEnd: cell, hint: null, hintStage: 0 }));
+    setState(prev => {
+      if (prev.isPaused || prev.isComplete || prev.isGameOver) return prev;
+      return { ...prev, selectionStart: cell, selectionEnd: cell, hint: null, hintStage: 0 };
+    });
   }, []);
 
   const updateSelection = useCallback((cell: CellPosition | null) => {
     setState(prev => {
       // You can only update selection if a start point exists
-      if (!prev.selectionStart) return prev;
+      if (!prev.selectionStart || prev.isPaused || prev.isComplete || prev.isGameOver) return prev;
       if (prev.difficulty === 'expert_plus') return prev;
       return { ...prev, selectionEnd: cell };
     });
@@ -380,6 +389,7 @@ export function useGameState() {
 
   const toggleNotesMode = useCallback(() => {
     setState(prev => {
+      if (prev.isPaused || prev.isComplete || prev.isGameOver) return prev;
       if (prev.difficulty === 'expert_plus') return { ...prev, notesMode: false };
       return { ...prev, notesMode: !prev.notesMode };
     });
@@ -406,7 +416,13 @@ export function useGameState() {
 
   const inputNumber = useCallback((num: number) => {
     setState(prev => {
-      if (!prev.selectionStart || !prev.selectionEnd || prev.isComplete || prev.isGameOver) return prev;
+      if (
+        !prev.selectionStart ||
+        !prev.selectionEnd ||
+        prev.isPaused ||
+        prev.isComplete ||
+        prev.isGameOver
+      ) return prev;
 
       // Determine bounding box
       const minRow = Math.min(prev.selectionStart.row, prev.selectionEnd.row);
@@ -578,7 +594,13 @@ export function useGameState() {
 
   const eraseCell = useCallback(() => {
     setState(prev => {
-      if (!prev.selectionStart || !prev.selectionEnd || prev.isComplete || prev.isGameOver) return prev;
+      if (
+        !prev.selectionStart ||
+        !prev.selectionEnd ||
+        prev.isPaused ||
+        prev.isComplete ||
+        prev.isGameOver
+      ) return prev;
       const notesDisabled = prev.difficulty === 'expert_plus';
       
       const minRow = Math.min(prev.selectionStart.row, prev.selectionEnd.row);
@@ -627,7 +649,12 @@ export function useGameState() {
 
   const undo = useCallback(() => {
     setState(prev => {
-      if (prev.history.length === 0 || prev.isComplete || prev.isGameOver) return prev;
+      if (
+        prev.history.length === 0 ||
+        prev.isPaused ||
+        prev.isComplete ||
+        prev.isGameOver
+      ) return prev;
       const last = prev.history[prev.history.length - 1];
       const conflicts = getAllConflicts(last.board);
       return {
@@ -642,7 +669,7 @@ export function useGameState() {
 
   const requestHint = useCallback(() => {
     setState(prev => {
-      if (prev.isComplete || prev.isGameOver) return prev;
+      if (prev.isPaused || prev.isComplete || prev.isGameOver) return prev;
       if (prev.difficulty === 'expert_plus') return prev;
       const notesDisabled = false;
 
@@ -780,7 +807,15 @@ export function useGameState() {
       recentAchievements: [],
       history: [],
       isGenerating: false,
+      isPaused: false,
     }));
+  }, []);
+
+  const togglePause = useCallback(() => {
+    setState(prev => {
+      if (prev.isComplete || prev.isGameOver || !prev.isRunning) return prev;
+      return { ...prev, isPaused: !prev.isPaused };
+    });
   }, []);
 
   // Memoize wrong cells (only for user-entered values)
@@ -814,6 +849,7 @@ export function useGameState() {
       getShareCode,
       loadFromCode,
       restartGame,
+      togglePause,
     },
   };
 }
